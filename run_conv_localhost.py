@@ -265,7 +265,8 @@ def arg_parser():
     parser.add_argument(
         "--agent_model",
         type=str,
-        default="morris-chang/SalesBot2_CoT_Lora_add_thought",
+        # default="morris-chang/SalesBot2_CoT_Lora_add_thought",
+        default="miulab/SalesBot2_CoT",
         help="agents model",
     )
     parser.add_argument(
