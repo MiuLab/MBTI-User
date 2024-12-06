@@ -1,11 +1,11 @@
-import os
 import tqdm
 import argparse
 import json
 import time
 import openai
-openai.api_key = "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"    # Azure 的密鑰
-model = "gpt-4"  # 模型的部署名
+
+openai.api_key = "sk-None-jBTKzHRti8HOOb4KEP88T3BlbkFJuJVsxHUSoLMdIxfp8iXU"
+model = "gpt-4"
 temperature = 0
 
 CONTEXT = """
@@ -51,6 +51,8 @@ Format:
 {eval_schema}
 Output:
 """
+
+
 def format_dialog(dialog):
     """
     Dialog Dict:
@@ -77,16 +79,18 @@ def format_dialog(dialog):
         elif d["role"] == "assistant":
             result += "User: " + d["content"] + "\n"
     return result
-def do_eval(dialog):
 
+
+def do_eval(dialog):
     dialog = format_dialog(dialog)
-    prompt = TEMPLATE.format(context=CONTEXT,eval_schema=EVAL_SCHEMA,dialog=dialog)
+    prompt = TEMPLATE.format(context=CONTEXT, eval_schema=EVAL_SCHEMA, dialog=dialog)
     response = openai.ChatCompletion.create(
         model=model,
         temperature=temperature,
         messages=[{"role": "user", "content": prompt}],
     )
     return response
+
 
 def main(args):
     with open(args.input, "r") as f:
@@ -100,16 +104,20 @@ def main(args):
             progress_bar.update(1)
             response = do_eval(v)
             d["score"].append(json.loads(response["choices"][0]["message"]["content"]))
-       # sleep for 1 second to avoid rate limit 
+        # sleep for 1 second to avoid rate limit
         time.sleep(0.5)
         # log
         with open(args.output, "w") as f:
             json.dump(data, f, indent=2)
+
+
 def arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True)
     parser.add_argument("--output", type=str, required=True)
     return parser.parse_args()
+
+
 if __name__ == "__main__":
     args = arg_parser()
     main(args)

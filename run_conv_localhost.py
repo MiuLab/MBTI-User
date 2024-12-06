@@ -1,5 +1,6 @@
 import os
 import argparse
+import random
 
 import torch
 
@@ -9,6 +10,7 @@ from tqdm.auto import tqdm
 import json
 import copy
 import openai
+
 
 AGNET_PREFIX = "Dialogue History:"
 AGENT_SUFFIX = "Here is a list of potential intents that might be referred by the user: ['FindAttraction', 'FindRestaurants', 'FindMovie', 'LookUpMusic', 'SearchHotel', 'FindEvents']. Think carefully to determine the potential intent and provide suitable response given the above dialog history. Output Format: \nThought: <thought>\nResponse: <response>"
@@ -27,13 +29,14 @@ def get_user_reponse(history):
     # TODO: The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_base="http://140.112.29.239:5000/")'
     # openai.api_base = "http://140.112.29.239:5000/"
 
-    model = "Llama-2-7b-chat-hf"
+    # model = "Llama-2-7b-chat-hf"
+    model = "meta-llama/Llama-2-7b-chat-hf"
 
     # create message from history
     # create a chat completion
 
     openai.api_key = "EMPTY"
-    openai.api_base = "http://localhost:5000/v1"
+    openai.api_base = "http://140.112.29.236:5050/v1"
     completion = openai.ChatCompletion.create(
         model=model,
         messages=history,
@@ -65,29 +68,31 @@ def main(args):
         with open(args.output_file, "r") as f:
             personas = json.load(f)
     else:
-        with open("persona.json", "r") as f:
+        with open(args.input_file, "r") as f:
             personas = json.load(f)
     # Build the prompt with a conversation template
-    with open("persona_with_conv.json", "r") as f:
-        ref = json.load(f)
+    # with open("persona_with_conv.json", "r") as f:
+    #     ref = json.load(f)
 
     conv_cnt = 0
-    # neg_labels = ["no_preference", "not_interested_2", "not_interested_4", "not_interested_all"]
+    neg_labels = ["no_preference", "not_interested_2", "not_interested_4", "not_interested_all"]
     # give me a list of 250 long with 0,1,2,3 randomly equalled distributed
-    # label_ls = []
-    # for i in range(250):
-    #     label_ls.append(neg_labels[i%4])
+    label_ls = []
+    for i in range(250):
+        label_ls.append(neg_labels[i%4])
 
-    # random.seed(0)
-    # label_ls = random.sample(label_ls, 250)
+    random.seed(0)
+    label_ls = random.sample(label_ls, 250)
 
     for i, persona in enumerate(tqdm(personas)):
         if "conversations" in persona and len(persona["conversations"]) == 5:
             continue
         print(f"Persona: {persona['persona']}")
         persona["conversations"] = {}
-        persona["negativeness"] = ref[i]["negativeness"]
-        persona["not_interested_in"] = ref[i]["not_interested_in"]
+        # persona["negativeness"] = ref[i]["negativeness"]
+        # persona["not_interested_in"] = ref[i]["not_interested_in"]
+        persona["negativeness"] = []
+        persona["not_interested_in"] = []
         persona["terminate_reason"] = []
         persona["num_turns"] = []
         for _ in range(5):
@@ -102,41 +107,43 @@ def main(args):
                     {"role": "user", "content": "Hi."},
                 ]
             )
-            # neg_label = label_ls[conv_cnt]
-            neg_label = persona["negativeness"][_]
+            neg_label = label_ls[conv_cnt]
+            # neg_label = persona["negativeness"][_]
             conv_cnt += 1
+            print(f"conv_cnt: {conv_cnt}")
             print(f"Negativeness: {neg_label}")
+
             if neg_label == "no_preference":
                 history[0]["content"] += "\n" + USER_SUFFIX
-                # persona["not_interested_in"].append("None")
+                persona["not_interested_in"].append("None")
             elif neg_label == "not_interested_2":
-                # random.seed(conv_cnt)
-                # intents = ", ".join(random.sample(['FindAttraction', 'FindRestaurants', 'FindMovie', 'LookUpMusic', 'SearchHotel', 'FindEvents'], 2))
-                intents = persona["not_interested_in"][_]
+                random.seed(conv_cnt)
+                intents = ", ".join(random.sample(['FindAttraction', 'FindRestaurants', 'FindMovie', 'LookUpMusic', 'SearchHotel', 'FindEvents'], 2))
+                # intents = persona["not_interested_in"][_]
                 history[0]["content"] += (
                     " "
                     + USER_SUFFIX_NEG.replace("{intents}", intents)
                     + "\n"
                     + USER_SUFFIX
                 )
-                # persona["not_interested_in"].append(intents)
+                persona["not_interested_in"].append(intents)
             elif neg_label == "not_interested_4":
-                # random.seed(conv_cnt)
-                # intents = ", ".join(random.sample(['FindAttraction', 'FindRestaurants', 'FindMovie', 'LookUpMusic', 'SearchHotel', 'FindEvents'], 4))
-                intents = persona["not_interested_in"][_]
+                random.seed(conv_cnt)
+                intents = ", ".join(random.sample(['FindAttraction', 'FindRestaurants', 'FindMovie', 'LookUpMusic', 'SearchHotel', 'FindEvents'], 4))
+                # intents = persona["not_interested_in"][_]
                 history[0]["content"] += (
                     " "
                     + USER_SUFFIX_NEG.replace("{intents}", intents)
                     + "\n"
                     + USER_SUFFIX
                 )
-                # persona["not_interested_in"].append(intents)
+                persona["not_interested_in"].append(intents)
             elif neg_label == "not_interested_all":
                 history[0]["content"] += " " + USER_SUFFIX_NEG_ALL + "\n" + USER_SUFFIX
-                # persona["not_interested_in"].append("FindAttraction, FindRestaurants, FindMovie, LookUpMusic, SearchHotel, FindEvents")
+                persona["not_interested_in"].append("FindAttraction, FindRestaurants, FindMovie, LookUpMusic, SearchHotel, FindEvents")
 
-            # persona["negativeness"].append(neg_label)
-            print(history)
+            persona["negativeness"].append(neg_label)
+            # print(history)
             while True:
                 # if random.random() < 0.5:
                 msg = get_user_reponse(history)
@@ -185,7 +192,7 @@ def main(args):
 
                 # Run inference
                 inputs = agent_tokenizer([prompt], return_tensors="pt").to(args.device)
-                print(f"Token len: {len(inputs['input_ids'][0])}")
+                # print(f"Token len: {len(inputs['input_ids'][0])}")
                 if len(inputs["input_ids"][0]) > 2048:
                     print("Input length exceeds 2048, break")
                     persona["terminate_reason"].append("Input length exceeds 2048")
@@ -217,7 +224,7 @@ def main(args):
                         break
 
                 thought = ""
-                print(outputs)
+                # print(outputs)
                 if args.agent_model != "meta-llama/Llama-2-7b-chat-hf":
                     thought, outputs = outputs.split("Response")
                 else:
@@ -265,7 +272,6 @@ def arg_parser():
     parser.add_argument(
         "--agent_model",
         type=str,
-        # default="morris-chang/SalesBot2_CoT_Lora_add_thought",
         default="miulab/SalesBot2_CoT",
         help="agents model",
     )
@@ -309,6 +315,8 @@ def arg_parser():
     parser.add_argument("--max_turns", type=int, default=20, help="max turns")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--output_file", type=str, default="persona_with_conv.json")
+    parser.add_argument("--input_file", type=str, default="persona.json")
+
 
     args = parser.parse_args()
     return args

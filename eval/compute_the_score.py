@@ -1,7 +1,7 @@
 import json
 import os
 import argparse
-
+import pprint
 """
 Here is the format of json file
 [
@@ -24,6 +24,8 @@ Here is the format of json file
         ]
 """
 def main(args):
+    pprint.pprint(args.model_eval)
+    print('##############################################')
     # READ FILE
     neg_labels = ["no_preference", "not_interested_2", "not_interested_4", "not_interested_all"]
     terminate_reasons = ["no_preference", "not_interested_2", "not_interested_4", "not_interested_all"]
@@ -128,21 +130,22 @@ def main(args):
     print(" Overall Success Rate: ", sum(model_success.values())/sum(model_label_count.values()))
     print(" Overall Average Turns: ", sum(model_success_avg_turns.values())/sum(model_success.values()))
 
-    print("Baseline Success Rate")
-    for label in neg_labels:
-        # print beautiful
-        print(f"    Negativeness: {label}")
-        print(f"    Success Rate: {baseline_success[label]/baseline_label_count[label]}")
-    print(" Overall Success Rate: ", sum(baseline_success.values())/sum(baseline_label_count.values()))
-    print(" Overall Average Turns: ", sum(baseline_success_avg_turns.values())/sum(baseline_success.values()))
+    # TODO   
+    # print("Baseline Success Rate")
+    # for label in neg_labels:
+    #     # print beautiful
+    #     print(f"    Negativeness: {label}")
+    #     print(f"    Success Rate: {baseline_success[label]/baseline_label_count[label]}")
+    # print(" Overall Success Rate: ", sum(baseline_success.values())/sum(baseline_label_count.values()))
+    # print(" Overall Average Turns: ", sum(baseline_success_avg_turns.values())/sum(baseline_success.values()))
 
-    print("LLAMA Baseline Success Rate")
-    for label in neg_labels:
-    # print beautiful
-        print(f"    Negativeness: {label}")
-        print(f"    Success Rate: {llama_baseline_success[label]/baseline_label_count[label]}")
-    print(" Overall Success Rate: ", sum(llama_baseline_success.values())/sum(baseline_label_count.values()))
-    print(" Overall Average Turns: ", sum(llama_baseline_success_avg_turns.values())/sum(llama_baseline_success.values()))
+    # print("LLAMA Baseline Success Rate")
+    # for label in neg_labels:
+    # # print beautiful
+    #     print(f"    Negativeness: {label}")
+    #     print(f"    Success Rate: {llama_baseline_success[label]/baseline_label_count[label]}")
+    # print(" Overall Success Rate: ", sum(llama_baseline_success.values())/sum(baseline_label_count.values()))
+    # print(" Overall Average Turns: ", sum(llama_baseline_success_avg_turns.values())/sum(llama_baseline_success.values()))
     
 
     # Compute average score, for naturalness, coherence, agent aggresiveness, smoothness and agent consistancy, for each label
@@ -199,39 +202,41 @@ def main(args):
         sum_of_model_score_[4] += score_ls[4]
     for s_label, score in zip(score_label, sum_of_model_score_):
         print(f"        {s_label}: {score/sum(model_label_count.values())}")
-    print("Baseline Average Score")
-    for label in neg_labels:
-        # print beautiful
-        print(f"    Negativenesls: {label}")
-        for s_label, score in zip(score_label, baseline_avg_score[label]):
-            print(f"        {s_label}: {score/baseline_label_count[label]}")
-    print("Overall Average Score")
-    sum_of_baseline_score = [0,0,0,0,0]
-    for score_ls in baseline_avg_score.values():
-        sum_of_baseline_score[0] += score_ls[0]
-        sum_of_baseline_score[1] += score_ls[1]
-        sum_of_baseline_score[2] += score_ls[2]
-        sum_of_baseline_score[3] += score_ls[3]
-        sum_of_baseline_score[4] += score_ls[4]
-    for s_label, score in zip(score_label, sum_of_baseline_score):
-        print(f"        {s_label}: {score/sum(baseline_label_count.values())}")
-    print("LLAMA Baseline Average Score")
-    for label in neg_labels:
-    # print beautiful
-        print(f"    Negativenesls: {label}")
-        for s_label, score in zip(score_label, llama_baseline_avg_score[label]):
-            print(f"        {s_label}: {score/baseline_label_count[label]}")
-    print("Overall Average Score")
-    sum_of_llama_baseline_score = [0,0,0,0,0]
-    for score_ls in llama_baseline_avg_score.values():
-        sum_of_llama_baseline_score[0] += score_ls[0]
-        sum_of_llama_baseline_score[1] += score_ls[1]
-        sum_of_llama_baseline_score[2] += score_ls[2]
-        sum_of_llama_baseline_score[3] += score_ls[3]
-        sum_of_llama_baseline_score[4] += score_ls[4]
+
+    # print("Baseline Average Score")
+    # for label in neg_labels:
+    #     # print beautiful
+    #     print(f"    Negativenesls: {label}")
+    #     for s_label, score in zip(score_label, baseline_avg_score[label]):
+    #         print(f"        {s_label}: {score/baseline_label_count[label]}")
+    # print("Overall Average Score")
+    # sum_of_baseline_score = [0,0,0,0,0]
+    # for score_ls in baseline_avg_score.values():
+    #     sum_of_baseline_score[0] += score_ls[0]
+    #     sum_of_baseline_score[1] += score_ls[1]
+    #     sum_of_baseline_score[2] += score_ls[2]
+    #     sum_of_baseline_score[3] += score_ls[3]
+    #     sum_of_baseline_score[4] += score_ls[4]
+    # for s_label, score in zip(score_label, sum_of_baseline_score):
+    #     print(f"        {s_label}: {score/sum(baseline_label_count.values())}")
+
+    # print("LLAMA Baseline Average Score")
+    # for label in neg_labels:
+    # # print beautiful
+    #     print(f"    Negativenesls: {label}")
+    #     for s_label, score in zip(score_label, llama_baseline_avg_score[label]):
+    #         print(f"        {s_label}: {score/baseline_label_count[label]}")
+    # print("Overall Average Score")
+    # sum_of_llama_baseline_score = [0,0,0,0,0]
+    # for score_ls in llama_baseline_avg_score.values():
+    #     sum_of_llama_baseline_score[0] += score_ls[0]
+    #     sum_of_llama_baseline_score[1] += score_ls[1]
+    #     sum_of_llama_baseline_score[2] += score_ls[2]
+    #     sum_of_llama_baseline_score[3] += score_ls[3]
+    #     sum_of_llama_baseline_score[4] += score_ls[4]
             
-    for s_label, score in zip(score_label, sum_of_llama_baseline_score):
-        print(f"        {s_label}: {score/sum(baseline_label_count.values())}")
+    # for s_label, score in zip(score_label, sum_of_llama_baseline_score):
+    #     print(f"        {s_label}: {score/sum(baseline_label_count.values())}")
 
 
     # print number of label for each label
@@ -243,26 +248,29 @@ def main(args):
         print(f"    Number of Label: {model_label_count[label]}")
 
     print("Overall Number of Label: ", sum(model_label_count.values()))
-    print("Baseline Number of Label")
-    for label in neg_labels:
-        # print beautiful
-        print(f"    Negativeness: {label}")
-        print(f"    Number of Label: {baseline_label_count[label]}")
 
-    print("Overall Number of Label: ", sum(baseline_label_count.values()))
-    print("LLAMA Baseline Number of Label")
-    for label in neg_labels:
-        # print beautiful
-        print(f"    Negativeness: {label}")
-        print(f"    Number of Label: {baseline_label_count[label]}")
-    print("Overall Number of Label: ", sum(baseline_label_count.values()))
+    # print("Baseline Number of Label")
+    # for label in neg_labels:
+    #     # print beautiful
+    #     print(f"    Negativeness: {label}")
+    #     print(f"    Number of Label: {baseline_label_count[label]}")
+    # print("Overall Number of Label: ", sum(baseline_label_count.values()))
+
+    # print("LLAMA Baseline Number of Label")
+    # for label in neg_labels:
+    #     # print beautiful
+    #     print(f"    Negativeness: {label}")
+    #     print(f"    Number of Label: {baseline_label_count[label]}")
+    # print("Overall Number of Label: ", sum(baseline_label_count.values()))
+
+    print('##############################################')
 
 
 def args_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_eval', type=str, default='./persona_with_conv_with_eval.json')
-    parser.add_argument('--baseline_eval', type=str, default='./persona_with_conv_salesbot1_baseline_with_eval.json')
-    parser.add_argument('--llama_baseline_eval', type=str, default='./persona_with_conv_llama_baseline_with_eval.json')
+    parser.add_argument('--model_eval', type=str, default='../eval/persona_with_conv_with_eval.json')
+    parser.add_argument('--baseline_eval', type=str, default='../eval/persona_with_conv_salesbot1_baseline_with_eval.json')
+    parser.add_argument('--llama_baseline_eval', type=str, default='../eval/persona_with_conv_llama_baseline_proceed_with_eval.json')
     args = parser.parse_args()
     return args
 if __name__ == '__main__':
