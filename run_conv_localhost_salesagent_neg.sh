@@ -1,0 +1,9 @@
+export CUDA_VISIBLE_DEVICES=0,1
+python run_conv_localhost.py --output_file  ./simulation_output/1205/E_with_conv_test_u_t75.json --input_file ./data/8types_10personas_1205_gpt4o/E.json --num-gpus 2 --max-gpu-memory 10GiB --load-8bit --cpu-offloading --user_temperature 0.75
+python run_conv_localhost.py --output_file  ./simulation_output/1205/I_with_conv_test_u_t75.json --input_file ./data/8types_10personas_1205_gpt4o/I.json --num-gpus 2 --max-gpu-memory 10GiB --load-8bit --cpu-offloading --user_temperature 0.75
+python run_conv_localhost.py --output_file  ./simulation_output/1205/S_with_conv_test_u_t75.json --input_file ./data/8types_10personas_1205_gpt4o/S.json --num-gpus 2 --max-gpu-memory 10GiB --load-8bit --cpu-offloading --user_temperature 0.75
+python run_conv_localhost.py --output_file  ./simulation_output/1205/N_with_conv_test_u_t75.json --input_file ./data/8types_10personas_1205_gpt4o/N.json --num-gpus 2 --max-gpu-memory 10GiB --load-8bit --cpu-offloading --user_temperature 0.75
+python run_conv_localhost.py --output_file  ./simulation_output/1205/J_with_conv_test_u_t75.json --input_file ./data/8types_10personas_1205_gpt4o/J.json --num-gpus 2 --max-gpu-memory 10GiB --load-8bit --cpu-offloading --user_temperature 0.75
+python run_conv_localhost.py --output_file  ./simulation_output/1205/P_with_conv_test_u_t75.json --input_file ./data/8types_10personas_1205_gpt4o/P.json --num-gpus 2 --max-gpu-memory 10GiB --load-8bit --cpu-offloading --user_temperature 0.75
+python run_conv_localhost.py --output_file  ./simulation_output/1205/T_with_conv_test_u_t75.json --input_file ./data/8types_10personas_1205_gpt4o/T.json --num-gpus 2 --max-gpu-memory 10GiB --load-8bit --cpu-offloading --user_temperature 0.75
+python run_conv_localhost.py --output_file  ./simulation_output/1205/F_with_conv_test_u_t75.json --input_file ./data/8types_10personas_1205_gpt4o/F.json --num-gpus 2 --max-gpu-memory 10GiB --load-8bit --cpu-offloading --user_temperature 0.75
