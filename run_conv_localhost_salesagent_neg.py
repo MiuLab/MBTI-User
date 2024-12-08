@@ -62,6 +62,8 @@ def main(args):
         revision=args.revision,
         debug=args.debug,
     )
+    agent_model.generation_config.pad_token_id = agent_tokenizer.pad_token_id
+
 
     # load persona from persona.json
     # if output file exitst, load it and continue
@@ -151,12 +153,25 @@ def main(args):
                 msg = get_user_reponse(history)
                 # else:
                 #     msg = "I don't want to talk about this. Let's talk about something else."
+
+                if "Assistant: " in msg:
+                    msg = msg.split("Assistant: ")[1]
+                if "ASSISTANT: " in msg:
+                    msg = msg.split("ASSISTANT: ")[1]
+                if "User: " in msg:
+                    msg = msg.split("User: ")[1]
+                if "USER: " in msg:
+                    msg = msg.split("USER: ")[1]
+                
+                msg = msg.strip()
+
                 history.append(
                     {
                         "role": "assistant",
                         "content": msg,
                     }
                 )
+
                 print(f"User: {msg}")
                 history_string = ""
                 if args.agent_model != "meta-llama/Llama-2-7b-chat-hf":
@@ -233,13 +248,14 @@ def main(args):
                 else:
                     outputs = outputs.split("USER")[0].split("User")[0].strip()
                 outputs = outputs.strip(": ")
-                print(thought.strip())
+                outputs = outputs.split("</s>")[0]
+                print("Thought: "+thought.split("Thought: ")[1])
                 print(f"Agent: {outputs}")
                 history.append(
                     {
                         "role": "user",
                         "content": outputs,
-                        "thought": thought.strip(),
+                        "thought": thought.split("Thought: ")[1],
                     }
                 )
                 num_turn += 2
