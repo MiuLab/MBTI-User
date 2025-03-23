@@ -4,7 +4,7 @@ import json
 import time
 import openai
 
-openai.api_key = "sk-None-jBTKzHRti8HOOb4KEP88T3BlbkFJuJVsxHUSoLMdIxfp8iXU"
+openai.api_key = ""
 model = "gpt-4"
 temperature = 0
 

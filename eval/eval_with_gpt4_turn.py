@@ -4,7 +4,7 @@ import argparse
 import json
 import time
 import openai
-openai.api_key = "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"    # openai 的密鑰
+openai.api_key = ""    # openai 的密鑰
 openai.api_version = "2023-09-01-preview" # API 版本，未來可能會變
 model = "gpt-4"  # 模型的部署名
 temperature = 0
