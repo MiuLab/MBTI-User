@@ -20,7 +20,8 @@ USER_SUFFIX_NEG_ALL = "You are not interested in FindAttraction, FindRestaurants
 USER_SUFFIX_NEG = "You are not interested in {intents}, if the agent ask any about one of them, donot ask for any recommendations and you should say, \"I don't want to talk about this. Let's talk about something else\". Note that you should be more firm."
 # USER_SUFFIX_NEG = "You are not interested in 'FindAttraction', 'FindRestaurants'. Do not continue these topics."
 
-SYSREM_PROMPT = "<|begin_of_text|> A chat  between a  curious  user  and  an  artificial  intelligence  assistant. USER: <value> ASSISTANT: <vallue> </s><|end_of_text|>"
+SYSREM_PROMPT = "<|begin_of_text|> A chat  between a  curious  user  and  an  artificial  intelligence  assistant. USER: <value>"
+
 
 @torch.inference_mode()
 def get_user_reponse(history):
@@ -37,7 +38,7 @@ def get_user_reponse(history):
     # create a chat completion
 
     openai.api_key = "EMPTY"
-    openai.api_base = "http://140.112.29.236:5050/v1"
+    openai.api_base = "http://localhost:5050/v1"
     completion = openai.ChatCompletion.create(
         model=model,
         messages=history,
@@ -64,7 +65,6 @@ def main(args):
     )
     agent_model.generation_config.pad_token_id = agent_tokenizer.pad_token_id
 
-
     # load persona from persona.json
     # if output file exitst, load it and continue
     if os.path.exists(args.output_file):
@@ -78,12 +78,17 @@ def main(args):
     #     ref = json.load(f)
 
     conv_cnt = 0
-    neg_labels = ["no_preference", "not_interested_2", "not_interested_4", "not_interested_all"]
+    neg_labels = [
+        "no_preference",
+        "not_interested_2",
+        "not_interested_4",
+        "not_interested_all",
+    ]
     # give me a list of 250 long with 0,1,2,3 randomly equalled distributed
     label_ls = []
     n = 50
     for i in range(n):
-        label_ls.append(neg_labels[i%4])
+        label_ls.append(neg_labels[i % 4])
 
     random.seed(0)
     label_ls = random.sample(label_ls, n)
@@ -122,7 +127,19 @@ def main(args):
                 persona["not_interested_in"].append("None")
             elif neg_label == "not_interested_2":
                 random.seed(conv_cnt)
-                intents = ", ".join(random.sample(['FindAttraction', 'FindRestaurants', 'FindMovie', 'LookUpMusic', 'SearchHotel', 'FindEvents'], 2))
+                intents = ", ".join(
+                    random.sample(
+                        [
+                            "FindAttraction",
+                            "FindRestaurants",
+                            "FindMovie",
+                            "LookUpMusic",
+                            "SearchHotel",
+                            "FindEvents",
+                        ],
+                        2,
+                    )
+                )
                 # intents = persona["not_interested_in"][_]
                 history[0]["content"] += (
                     " "
@@ -133,7 +150,19 @@ def main(args):
                 persona["not_interested_in"].append(intents)
             elif neg_label == "not_interested_4":
                 random.seed(conv_cnt)
-                intents = ", ".join(random.sample(['FindAttraction', 'FindRestaurants', 'FindMovie', 'LookUpMusic', 'SearchHotel', 'FindEvents'], 4))
+                intents = ", ".join(
+                    random.sample(
+                        [
+                            "FindAttraction",
+                            "FindRestaurants",
+                            "FindMovie",
+                            "LookUpMusic",
+                            "SearchHotel",
+                            "FindEvents",
+                        ],
+                        4,
+                    )
+                )
                 # intents = persona["not_interested_in"][_]
                 history[0]["content"] += (
                     " "
@@ -144,7 +173,9 @@ def main(args):
                 persona["not_interested_in"].append(intents)
             elif neg_label == "not_interested_all":
                 history[0]["content"] += " " + USER_SUFFIX_NEG_ALL + "\n" + USER_SUFFIX
-                persona["not_interested_in"].append("FindAttraction, FindRestaurants, FindMovie, LookUpMusic, SearchHotel, FindEvents")
+                persona["not_interested_in"].append(
+                    "FindAttraction, FindRestaurants, FindMovie, LookUpMusic, SearchHotel, FindEvents"
+                )
 
             persona["negativeness"].append(neg_label)
             # print(history)
@@ -162,7 +193,7 @@ def main(args):
                     msg = msg.split("User: ")[1]
                 if "USER: " in msg:
                     msg = msg.split("USER: ")[1]
-                
+
                 msg = msg.strip()
 
                 history.append(
@@ -193,7 +224,7 @@ def main(args):
                 msg_prompt = ""
                 if args.agent_model != "meta-llama/Llama-2-7b-chat-hf":
                     msg_prompt = AGNET_PREFIX + history_string + AGENT_SUFFIX
-                    msg_prompt = SYSREM_PROMPT.replace("<vallue>", msg_prompt)
+                    msg_prompt = SYSREM_PROMPT.replace("<value>", msg_prompt)
                 else:
                     msg_prompt = AGNET_PREFIX + history_string + AGENT_SUFFIX_LLAMA
                 conv = get_conversation_template(args.model_path)
@@ -207,6 +238,10 @@ def main(args):
                     conv.append_message(conv.roles[1], None)
 
                 prompt = conv.get_prompt()
+                prompt = prompt.split("<|begin_of_text|>")[-1]
+                prompt = "<|begin_of_text|> " + prompt
+                prompt = prompt.replace("### Assistant:", "")
+                print(f"Prompt: {prompt}")
 
                 # Run inference
                 inputs = agent_tokenizer([prompt], return_tensors="pt").to(args.device)
@@ -249,7 +284,7 @@ def main(args):
                     outputs = outputs.split("USER")[0].split("User")[0].strip()
                 outputs = outputs.strip(": ")
                 outputs = outputs.split("</s>")[0]
-                print("Thought: "+thought.split("Thought: ")[1])
+                print("Thought: " + thought.split("Thought: ")[1])
                 print(f"Agent: {outputs}")
                 history.append(
                     {
@@ -291,7 +326,7 @@ def arg_parser():
     parser.add_argument(
         "--agent_model",
         type=str,
-        default="miulab/SalesBot2_CoT_lora_w_neg",
+        default="/home/user01/axolotl/outputs/salesagent-qlora-out/",
         help="agents model",
     )
     parser.add_argument(
@@ -335,7 +370,6 @@ def arg_parser():
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--output_file", type=str, default="persona_with_conv.json")
     parser.add_argument("--input_file", type=str, default="persona.json")
-
 
     args = parser.parse_args()
     return args

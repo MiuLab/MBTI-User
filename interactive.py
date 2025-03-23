@@ -5,19 +5,19 @@ Usage:
 python3 -m fastchat.serve.huggingface_api --model lmsys/vicuna-7b-v1.5
 python3 -m fastchat.serve.huggingface_api --model lmsys/fastchat-t5-3b-v1.0
 """
+
 import argparse
 
 import torch
 
 from fastchat.model import load_model, get_conversation_template, add_model_args
 
-from transformers import AutoModelForCausalLM
-from peft import PeftModel
-from tqdm.auto import tqdm
-import json
-import copy
+
 PREFIX = "Dialogue History:"
 SUFFIX = "Here is a list of potential intents that might be referred by the user: ['FindAttraction', 'FindRestaurants', 'FindMovie', 'LookUpMusic', 'SearchHotel', 'FindEvents']. Think carefully to determine the potential intent and provide suitable response given the above dialog history. Output Format: \nThought: <thought>\nResponse: <response>"
+SYSREM_PROMPT = "<|begin_of_text|> A chat  between a  curious  user  and  an  artificial  intelligence  assistant. USER: <value> ASSISTANT:"
+
+
 @torch.inference_mode()
 def main(args):
     # Load model
@@ -32,15 +32,16 @@ def main(args):
         revision=args.revision,
         debug=args.debug,
     )
-    
+
     # Build the prompt with a conversation template
     history = ""
-    while(True):
+    while True:
         msg = input("User: ")
         if msg == "exit":
             print("End Conversation")
             break
         msg_prompt = PREFIX + history + "User: " + msg + " " + SUFFIX
+        msg_prompt = SYSREM_PROMPT.replace("<value>", msg_prompt)
         conv = get_conversation_template(args.model_path)
         # print(conv.name)
         conv.append_message(conv.roles[0], msg_prompt)
@@ -49,9 +50,11 @@ def main(args):
         # print(f"Context: {prompt}")
 
         # Run inference
-        # print(prompt)
+        prompt = prompt.split("<|begin_of_text|>")[-1]
+        prompt = "<|begin_of_text|> " + prompt
+        prompt = prompt.replace("### Assistant:", "")
         inputs = tokenizer([prompt], return_tensors="pt").to(args.device)
-        print(f"Token len", len(inputs["input_ids"][0]))
+        print("Token len", len(inputs["input_ids"][0]))
         output_ids = model.generate(
             **inputs,
             do_sample=True if args.temperature > 1e-5 else False,
@@ -67,11 +70,11 @@ def main(args):
         outputs = tokenizer.decode(
             output_ids, skip_special_tokens=True, spaces_between_special_tokens=False
         )
-        outputs = outputs.split("Response: ")[-1]
+        thought = outputs.split("Response: ")[0].strip()
+        outputs = outputs.split("Response: ")[-1].strip("</s>")
+        print(f"{thought}")
         print(f"{conv.roles[1]}: {outputs}")
         history += "User: " + msg + "\n" + "Agent: " + outputs + "\n"
-
-
 
 
 if __name__ == "__main__":
@@ -81,8 +84,16 @@ if __name__ == "__main__":
     parser.add_argument("--repetition_penalty", type=float, default=1.0)
     parser.add_argument("--max-new-tokens", type=int, default=512)
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--test_data_path", type=str, default="./data/final_data_narrative_in_the_end/test.json")
-    parser.add_argument("--output_path", type=str, default="./data/final_data_narrative_in_the_end/test_output.json")
+    parser.add_argument(
+        "--test_data_path",
+        type=str,
+        default="./data/final_data_narrative_in_the_end/test.json",
+    )
+    parser.add_argument(
+        "--output_path",
+        type=str,
+        default="./data/final_data_narrative_in_the_end/test_output.json",
+    )
     # parser.add_argument("--message", type=str, default="Hello! Who are you?")
     args = parser.parse_args()
 
